@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">PopularMovies-Stage1a</string>
+    <string name="popular_title">Popular Movies</string>
+    <string name="top_rated_title">Top Rated Movies</string>
+    <string name="detail_movie">Movie Details</string>
+    <string name="send_parcel_movie">SEND_PARCELABLE_MOVIE</string>
+    <string name="bundle_parcel_movie">MOVIE_PARCELABLE_MOVIE</string>
+</resources>
