@@ -27,19 +27,21 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnItemClick;
 
-    private GridView gdMoviesPoster;
+public class MainActivity extends AppCompatActivity {
+
+    @BindView(R.id.gd_movies_poster) GridView gdMoviesPoster;
+    @BindView(R.id.pb_loader_bar) ProgressBar pbLoader;
     private MovieAdapter movieAdapter;
-    private ProgressBar pbLoader;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        gdMoviesPoster = (GridView) findViewById(R.id.gd_movies_poster);
-        pbLoader = (ProgressBar) findViewById(R.id.pb_loader_bar);
-        gdMoviesPoster.setOnItemClickListener(this);
+        ButterKnife.bind(this);
         movieAdapter = new MovieAdapter(this);
         gdMoviesPoster.setAdapter(movieAdapter);
         if (savedInstanceState == null) {
@@ -50,8 +52,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
     }
 
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+    @OnItemClick(R.id.gd_movies_poster)
+    public void movieClicked(AdapterView<?> parent, int position) {
         Movie m = (Movie) parent.getItemAtPosition(position);
         Intent newIntent = new Intent(MainActivity.this, MovieDetailActivity.class);
         newIntent.putExtra(getResources().getString(R.string.send_parcel_movie), m);
