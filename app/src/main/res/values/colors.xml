@@ -4,4 +4,5 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
     <color name="movieTitle">#25FA36</color>
+    <color name="linkLike">#3535AC</color>
 </resources>

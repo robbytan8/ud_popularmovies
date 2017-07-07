@@ -5,4 +5,6 @@
     <string name="detail_movie">Movie Details</string>
     <string name="send_parcel_movie">SEND_PARCELABLE_MOVIE</string>
     <string name="bundle_parcel_movie">MOVIE_PARCELABLE_MOVIE</string>
+    <string name="text_more">More</string>
+    <string name="text_less">Less</string>
 </resources>

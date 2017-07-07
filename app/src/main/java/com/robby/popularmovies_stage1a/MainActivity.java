@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             ArrayList<Movie> movies = savedInstanceState.getParcelableArrayList(getResources().getString(R.string.bundle_parcel_movie));
             movieAdapter.setMovies(movies);
+            showData();
         }
     }
 
