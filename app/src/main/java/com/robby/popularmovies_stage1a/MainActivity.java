@@ -1,7 +1,6 @@
 package com.robby.popularmovies_stage1a;
 
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
@@ -13,28 +12,21 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.robby.popularmovies_stage1a.entity.Movie;
+import com.robby.popularmovies_stage1a.utilities.MovieDbTaskCompleted;
 import com.robby.popularmovies_stage1a.utilities.MyUtilities;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnItemClick;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MovieDbTaskCompleted {
 
-    @BindView(R.id.gd_movies_poster) GridView gdMoviesPoster;
-    @BindView(R.id.pb_loader_bar) ProgressBar pbLoader;
+    @BindView(R.id.gd_movies_poster)
+    GridView gdMoviesPoster;
+    @BindView(R.id.pb_loader_bar)
+    ProgressBar pbLoader;
     private MovieAdapter movieAdapter;
 
     @Override
@@ -45,7 +37,9 @@ public class MainActivity extends AppCompatActivity {
         movieAdapter = new MovieAdapter(this);
         gdMoviesPoster.setAdapter(movieAdapter);
         if (savedInstanceState == null) {
-            new MovieDbTask().execute(MyUtilities.URL_POPULAR);
+            getMoviesFromTmdb(MyUtilities.URL_POPULAR);
+        } else if (savedInstanceState != null && savedInstanceState.getParcelableArrayList(getResources().getString(R.string.bundle_parcel_movie)).size() == 0) {
+            getMoviesFromTmdb(MyUtilities.URL_POPULAR);
         } else {
             ArrayList<Movie> movies = savedInstanceState.getParcelableArrayList(getResources().getString(R.string.bundle_parcel_movie));
             movieAdapter.setMovies(movies);
@@ -72,10 +66,10 @@ public class MainActivity extends AppCompatActivity {
         showLoader();
         switch (item.getItemId()) {
             case R.id.action_popular:
-                new MovieDbTask().execute(MyUtilities.URL_POPULAR);
+                getMoviesFromTmdb(MyUtilities.URL_POPULAR);
                 break;
             case R.id.action_top_rated:
-                new MovieDbTask().execute(MyUtilities.URL_TOP_RATED);
+                getMoviesFromTmdb(MyUtilities.URL_TOP_RATED);
                 break;
         }
         changeAppTitle(item.getItemId());
@@ -88,12 +82,21 @@ public class MainActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
     }
 
+    @Override
+    public void onTaskCompleted(ArrayList<Movie> movies) {
+        if (movies == null) {
+            Toast.makeText(this, "Error retrieving data!!!", Toast.LENGTH_SHORT).show();
+        } else {
+            movieAdapter.setMovies(movies);
+        }
+    }
+
     private void showLoader() {
         pbLoader.setVisibility(View.VISIBLE);
         gdMoviesPoster.setVisibility(View.INVISIBLE);
     }
 
-    private void showData() {
+    public void showData() {
         pbLoader.setVisibility(View.INVISIBLE);
         gdMoviesPoster.setVisibility(View.VISIBLE);
     }
@@ -109,69 +112,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    class MovieDbTask extends AsyncTask<String, Void, ArrayList<Movie>> {
-
-        @Override
-        protected ArrayList<Movie> doInBackground(String... params) {
-            if (MyUtilities.hasInternetConnection(getApplicationContext())) {
-                InputStream inputStream;
-                HttpURLConnection connection = null;
-                ArrayList<Movie> movies = new ArrayList<>();
-                try {
-                    URL url = MyUtilities.buildUrl(params[0]);
-                    connection = (HttpURLConnection) url.openConnection();
-                    connection.setRequestMethod("GET");
-                    connection.connect();
-                    int responseCode = connection.getResponseCode();
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        inputStream = new BufferedInputStream(connection.getInputStream());
-                        String moviesInString = MyUtilities.convertStreamToString(inputStream);
-                        movies.addAll(this.convertStreamToData(moviesInString));
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    if (connection != null) {
-                        connection.disconnect();
-                    }
-                }
-                return movies;
-            }
-            return null;
+    private void getMoviesFromTmdb(String url) {
+        if (MyUtilities.hasInternetConnection(this)) {
+            new MovieDbTask(this, this).execute(url);
+        } else {
+            Toast.makeText(this, "Please check your internet connection!!!", Toast.LENGTH_SHORT).show();
         }
-
-        @Override
-        protected void onPostExecute(ArrayList<Movie> movies) {
-            if (movies != null) {
-                movieAdapter.setMovies(movies);
-                showData();
-            } else {
-                Toast.makeText(MainActivity.this, "Please check your internet connection", Toast.LENGTH_SHORT).show();
-            }
-        }
-
-        private List<Movie> convertStreamToData(String moviesInString) {
-            List<Movie> movies = new ArrayList<>();
-            try {
-                JSONObject jsonObject = new JSONObject(moviesInString);
-                JSONArray jsonArray = jsonObject.getJSONArray("results");
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    JSONObject object = jsonArray.getJSONObject(i);
-                    Movie movie = new Movie();
-                    movie.setId(object.getInt(Movie.TAG_ID));
-                    movie.setTitle(object.getString(Movie.TAG_TITLE));
-                    movie.setPosterPath(object.getString(Movie.TAG_POSTER_PATH));
-                    movie.setOverview(object.getString(Movie.TAG_OVERVIEW));
-                    movie.setVoteAverage(object.getDouble(Movie.TAG_VOTE_AVERAGE));
-                    movie.setReleaseDate(object.getString(Movie.TAG_RELEASE_DATE));
-//                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
-                    movies.add(movie);
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return movies;
-        }
-
     }
 }
